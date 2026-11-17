@@ -1,0 +1,27 @@
+# ---------- 构建产物 ----------
+target/
+build/
+dist/
+node_modules/
+
+# ---------- IDE / 编辑器 ----------
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# ---------- 运行时产生的图片（保留空目录） ----------
+uploads/*
+!uploads/.gitkeep
+
+# ---------- 日志与系统文件 ----------
+*.log
+logs/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 本地环境配置 ----------
+.env
+.env.local

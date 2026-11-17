@@ -1,0 +1,85 @@
+name: order-web
+
+services:
+  # ---------------- MySQL ----------------
+  mysql:
+    image: mysql:8.0
+    container_name: ordering-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ordering
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - ordering-net
+
+  # ---------------- 后端 Spring Boot ----------------
+  backend:
+    build: ./backend
+    container_name: ordering-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ordering?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      UPLOAD_DIR: /app/uploads
+      TZ: Asia/Shanghai
+    volumes:
+      # 宿主机 ./uploads <-> 容器 /app/uploads，图片持久化
+      - ./uploads:/app/uploads
+    networks:
+      - ordering-net
+
+  # ---------------- 前端 Nginx ----------------
+  frontend:
+    build: ./frontend
+    container_name: ordering-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      # 宿主机 8080 映射容器 80
+      - "8080:80"
+    volumes:
+      # 只读挂载图片目录，Nginx 直接静态输出 /uploads/
+      - ./uploads:/app/uploads:ro
+    networks:
+      - ordering-net
+
+  # ---------------- 数据库管理（测试用，可删） ----------------
+  adminer:
+    image: adminer:latest
+    container_name: ordering-adminer
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      # 8082 避免和常见的 FileBrowser(8081) 冲突
+      - "8082:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+    networks:
+      - ordering-net
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  ordering-net:
+    driver: bridge
