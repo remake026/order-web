@@ -10,6 +10,8 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
       MYSQL_DATABASE: ordering
       TZ: Asia/Shanghai
+      # 让容器内 locale 为 UTF-8，避免 init 脚本中的中文被按 latin1 处理
+      LANG: C.UTF-8
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -39,6 +41,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
       UPLOAD_DIR: /app/uploads
       TZ: Asia/Shanghai
+      LANG: C.UTF-8
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     volumes:
       # 宿主机 ./uploads <-> 容器 /app/uploads，图片持久化
       - ./uploads:/app/uploads

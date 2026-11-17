@@ -10,6 +10,11 @@ CREATE DATABASE IF NOT EXISTS ordering
 
 USE ordering;
 
+-- 强制客户端字符集为 utf8mb4。
+-- 容器内 locale 通常是 C，mysql 客户端会默认按 latin1 解释脚本里的中文，
+-- 导致「热菜」被存成 mojibake（çƒ­èœœ）。这一行必须在任何 INSERT 之前执行。
+SET NAMES utf8mb4;
+
 -- ---------- 分类 ----------
 CREATE TABLE IF NOT EXISTS category (
     id      BIGINT       NOT NULL AUTO_INCREMENT,
